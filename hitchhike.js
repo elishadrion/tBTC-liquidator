@@ -7,9 +7,8 @@ const TBTCSystemJSON = require("@keep-network/tbtc/artifacts/TBTCSystem.json");
 const config = require('./config.json');
 const {getGasPrice} = require('./gas-price.js');
 
-
 // Web3 related constants
-const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://mainnet.infura.io/ws/v3/${config.infura}`));
+const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://${config.network}.infura.io/ws/v3/${config.infura}`));
 const TBTCSystemAddress = config.TBTCAddress;
 const TBTCSystemContract = new web3.eth.Contract(TBTCSystemJSON.abi, TBTCSystemAddress);
 
@@ -23,16 +22,14 @@ const SAFE_PROOF_TIMEOUT = PROOF_TIMEOUT - (10*1000);
 const DEFAULT_GAS_PRICE = config.DEFAULT_GAS_PRICE;
 
 
-const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
-web3.eth.accounts.wallet.add(account);
-web3.eth.defaultAccount = account.address;
-
-
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function main() {
+        const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
+        web3.eth.accounts.wallet.add(account);
+        web3.eth.defaultAccount = account.address;
         processPastCourtesies();
         processPastSignatures();
         processPastProofs();

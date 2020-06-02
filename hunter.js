@@ -9,16 +9,12 @@ const config = require('./config.json');
 const {getGasPrice} = require('./gas-price.js');
 
 // Web3 related constants
-const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://mainnet.infura.io/ws/v3/${config.infura}`));
+const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://${config.network}.infura.io/ws/v3/${config.infura}`));
 const TBTCSystemAddress = config.TBTCAddress;
 const TBTCSystemContract = new web3.eth.Contract(TBTCSystemJSON.abi, TBTCSystemAddress);
 
 const NAP_TIME = config.hunterNapTime * 1000;
 
-
-const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
-web3.eth.accounts.wallet.add(account);
-web3.eth.defaultAccount = account.address;
 
 var deposits = [];
 
@@ -27,6 +23,9 @@ function sleep(ms) {
 }
 
 async function main() {
+    const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
+    web3.eth.accounts.wallet.add(account);
+    web3.eth.defaultAccount = account.address;
         // Fetch all the created Deposits since the beginning
         var depositsCreated = await TBTCSystemContract.getPastEvents("Created", {
                 fromBlock:config.deploymentBlock
@@ -65,12 +64,12 @@ async function attemptLiquidationOnAll() {
                 const collateralizationPercentage = await deposit.methods.getCollateralizationPercentage()
                 .call((error, result) => {
                         if (error)
-                                continue;
+                                return;
                 });
                 const severeThreshold = await deposit.methods.getSeverelyUndercollateralizedThresholdPercent()
                 .call((error, result) => {
                         if (error)
-                                continue;
+                                return;
                 });
                 const price = await getGasPrice();
                 const depositAddress = deposit.options.address;
@@ -85,5 +84,6 @@ async function attemptLiquidationOnAll() {
 
         }
 }
+
 
 main();
