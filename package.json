@@ -1,0 +1,35 @@
+{
+  "name": "tbtc-liq",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@keep-network/keep-ecdsa": ">0.15.0-pre <0.15.0-rc",
+    "@keep-network/tbtc": ">0.15.0-pre <0.15.0-rc",
+    "bcoin": "git+https://github.com/bcoin-org/bcoin.git#8851582",
+    "bcrypto": "^4.1.0",
+    "bufio": "^1.0.6",
+    "electrum-client-js": "git+https://github.com/keep-network/electrum-client-js.git#v0.1.0",
+    "got": "^11.1.4",
+    "request": "^2.88.2",
+    "sqlite3": "^4.2.0"
+  },
+  "devDependencies": {
+    "@0x/subproviders": "^6.0.8",
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0",
+    "chai": "^4.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.3.0",
+    "fs": "0.0.1-security",
+    "mocha": "^6.2.0",
+    "prettier": "^1.19.1",
+    "web3": "^1.2.0",
+    "web3-provider-engine": "^15.0.7"
+  }
+}
