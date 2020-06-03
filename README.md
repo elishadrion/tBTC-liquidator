@@ -20,9 +20,12 @@ What it doesn't do :
 
 The configuration is quite rudimentary (for now). It's split between a json config file and one environment variable `TBTC_PKEY` which holds your private key.
 
+Copy sample.config.json to config.json and make your edits there.
+
 ```javascript
 {
         "infura": your infura access key,
+        "network": ropsten or mainnet,
         "TBTCAddress": address of the tBTCSystem contract,
         "courtesyTimeout":21600, // 6 hours of delay before we can liquidate
         "signatureTimeout":7200, // 2 hours of delay
@@ -33,9 +36,9 @@ The configuration is quite rudimentary (for now). It's split between a json conf
 }
 ```
 
-## hitchike.js
+## hitchhike.js
 
-The script does exactly what its name sounds like. For all three following events, it passively waits for emission, processes it and wait for the corresponding delay to be over before calling the correspondig timeout function.
+The script does exactly what its name sounds like. For all three following events, it passively waits for emission, processes it and wait for the corresponding delay to be over before calling the corresponding timeout function.
 ```
 🥇 CourtesyCalled
 🥈 RedemptionRequested

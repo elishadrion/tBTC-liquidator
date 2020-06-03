@@ -1,5 +1,6 @@
 {
         "infura":"",
+        "network":"ropsten",
         "TBTCAddress":"",
         "courtesyTimeout":21600,
         "signatureTimeout":7200,
