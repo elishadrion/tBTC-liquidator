@@ -140,15 +140,16 @@ async function processPastProofs() {
 /**
  * getDelay - Compute the delay before we can all notifyCourtesyTimeout
  *
- * @param  {integer} blockNumber number of the block of courtesyCalled
- * @return {integer}             duration of sleep
+ * @param  {integer} blockNumber        number of the block of emitted event
+ * @param  {integer} defaultDuration    delay of the appropriate event in ms
+ * @return {integer}                    duration of sleep
  */
 async function getDelay(blockNumber, defaultDuration) {
         var delay = defaultDuration;
         try {
                 const now = Math.floor(Date.now());
                 const block = await web3.eth.getBlock(blockNumber);
-                const expiration = block.timestamp*1000 + COURTESY_TIMEOUT;
+                const expiration = block.timestamp*1000 + defaultDuration;
                 delay = expiration - now;
         } catch (error) {
                 console.log("Error when fetching block's timestamp.");
