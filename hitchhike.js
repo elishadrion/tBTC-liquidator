@@ -13,12 +13,9 @@ const TBTCSystemAddress = config.TBTCAddress;
 const TBTCSystemContract = new web3.eth.Contract(TBTCSystemJSON.abi, TBTCSystemAddress);
 
 // Integer constants
-const COURTESY_DURATION_MS = config.courtesyTimeout * 1000
-const SAFE_COURTESY_DURATION = COURTESY_DURATION_MS - (10 * 1000) //10 seconds earlier
+const COURTESY_TIMEOUT = config.courtesyTimeout * 1000
 const SIGNATURE_TIMEOUT = config.signatureTimeout * 1000;
-const SAFE_SIGNATURE_TIMEOUT = SIGNATURE_TIMEOUT - (10*1000)
 const PROOF_TIMEOUT = config.proofTimeout * 1000;
-const SAFE_PROOF_TIMEOUT = PROOF_TIMEOUT - (10*1000);
 const DEFAULT_GAS_PRICE = config.DEFAULT_GAS_PRICE;
 
 
@@ -143,15 +140,16 @@ async function processPastProofs() {
 /**
  * getDelay - Compute the delay before we can all notifyCourtesyTimeout
  *
- * @param  {integer} blockNumber number of the block of courtesyCalled
- * @return {integer}             duration of sleep
+ * @param  {integer} blockNumber        number of the block of emitted event
+ * @param  {integer} defaultDuration    delay of the appropriate event in ms
+ * @return {integer}                    duration of sleep
  */
 async function getDelay(blockNumber, defaultDuration) {
         var delay = defaultDuration;
         try {
                 const now = Math.floor(Date.now());
                 const block = await web3.eth.getBlock(blockNumber);
-                const expiration = block.timestamp*1000 + SAFE_COURTESY_DURATION;
+                const expiration = block.timestamp*1000 + defaultDuration;
                 delay = expiration - now;
         } catch (error) {
                 console.log("Error when fetching block's timestamp.");
@@ -167,7 +165,7 @@ async function getDelay(blockNumber, defaultDuration) {
  * @return {}
  */
 async function callCourtesyTimeout(depositAddress, blockNumber) {
-        var delay = await getDelay(blockNumber, SAFE_COURTESY_DURATION);
+        var delay = await getDelay(blockNumber, COURTESY_TIMEOUT);
         //Sleeps for the entire duration of the delay, before we can liquidate
         await sleep(delay);
         const price = await getGasPrice();
@@ -195,7 +193,7 @@ async function callCourtesyTimeout(depositAddress, blockNumber) {
 }
 
 async function callSignatureTimeout(depositAddress, blockNumber) {
-        var delay = await getDelay(blockNumber, SAFE_SIGNATURE_TIMEOUT);
+        var delay = await getDelay(blockNumber, SIGNATURE_TIMEOUT);
         //Sleeps for the entire duration of the delay, before we can liquidate
         await sleep(delay);
         const price = await getGasPrice();
@@ -221,7 +219,7 @@ async function callSignatureTimeout(depositAddress, blockNumber) {
 }
 
 async function callProofTimeout(depositAddress, blockNumber) {
-        var delay = await getDelay(blockNumber, SAFE_COURTESY_DURATION);
+        var delay = await getDelay(blockNumber, PROOF_TIMEOUT);
         //Sleeps for the entire duration of the delay, before we can liquidate
         await sleep(delay);
         const price = await getGasPrice();
