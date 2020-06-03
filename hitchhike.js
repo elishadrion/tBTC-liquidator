@@ -25,7 +25,7 @@ function sleep(ms) {
 
 async function main() {
         const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
-        web3.eth.accounts.wallet.add(account);
+        await web3.eth.accounts.wallet.add(account);
         web3.eth.defaultAccount = account.address;
         processPastCourtesies();
         processPastSignatures();
@@ -183,10 +183,14 @@ async function callCourtesyTimeout(depositAddress, blockNumber) {
                 }
         });
         //if in the courtesy call state, we liquidate it
-        deposit.methods.notifyCourtesyTimeout().send({gasPrice:price, gas:400000})
+        deposit.methods.notifyCourtesyTimeout().send({
+                from:web3.eth.defaultAccount,
+                gasPrice:price,
+                gas:400000})
         .on('receipt', function(receipt) {
                 console.log(`notifyCourtesyTimeout on Deposit ${depositAddress} was successfull.`)
         }).on('error', function(error, receipt) {
+                console.log(error.message);
                 console.log(`notifyCourtesyTimeout on Deposit ${depositAddress} failed.`)
         });
 
@@ -210,10 +214,14 @@ async function callSignatureTimeout(depositAddress, blockNumber) {
                         }
                 }
         });
-        deposit.methods.notifySignatureTimeout().send({gasPrice:price, gas:400000})
+        deposit.methods.notifySignatureTimeout().send({
+                from:web3.eth.defaultAccount,
+                gasPrice:price,
+                gas:400000})
         .on('receipt', function(receipt) {
                 console.log(`notifySignatureTimeout on Deposit ${depositAddress} was successfull.`)
         }).on('error', function(error, receipt) {
+                console.log(error.message);
                 console.log(`notifySignatureTimeout on Deposit ${depositAddress} failed.`)
         });
 }
@@ -236,10 +244,14 @@ async function callProofTimeout(depositAddress, blockNumber) {
                         }
                 }
         });
-        deposit.methods.notifyRedemptionProofTimeout().send({gasPrice:price, gas:400000})
+        deposit.methods.notifyRedemptionProofTimeout().send({
+                from:web3.eth.defaultAccount,
+                gasPrice:price,
+                gas:400000})
         .on('receipt', function(receipt) {
                 console.log(`notifyRedemptionProofTimeout on Deposit ${depositAddress} was successfull.`)
         }).on('error', function(error, receipt) {
+                console.log(error.message);
                 console.log(`notifyRedemptionProofTimeout on Deposit ${depositAddress} failed.`)
         });
 }
