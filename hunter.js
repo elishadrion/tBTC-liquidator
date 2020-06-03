@@ -59,9 +59,8 @@ async function main() {
 }
 
 async function attemptLiquidationOnAll() {
-        for (var i = 0; i < deposits.length; i++) {
-                var deposit = deposits[i];
-                const collateralizationPercentage = await deposit.methods.getCollateralizationPercentage()
+        deposits.forEach(async (deposit, index, deposits) => {
+            const collateralizationPercentage = await deposit.methods.getCollateralizationPercentage()
                 .call((error, result) => {
                         if (error)
                                 return;
@@ -76,13 +75,13 @@ async function attemptLiquidationOnAll() {
                 if (severeThreshold > collateralizationPercentage) {
                         deposit.methods.notifyUndercollateralizedLiquidation().send({gasPrice:price, gas:400000})
                         .on('receipt', function(receipt) {
-                                console.log(`notifyUndercollateralizedLiquidation on Deposit ${depositAddress} was successfull.`)
+                                console.log(`notifyUndercollateralizedLiquidation on Deposit ${depositAddress} was successfull.`);
+                                deposit.splice(index, 1);
                         }).on('error', function(error, receipt) {
-                                console.log(`notifyUndercollateralizedLiquidation on Deposit ${depositAddress} failed.`)
+                                console.log(`notifyUndercollateralizedLiquidation on Deposit ${depositAddress} failed.`);
                         });
                 }
-
-        }
+        });        
 }
 
 
