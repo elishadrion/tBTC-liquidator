@@ -1,20 +1,19 @@
 const config = require('./config.json');
 const got = require('got');
+const cheerio = require('cheerio');
 
 async function getGasPrice() {
-        var response;
-        var price = config.defaultGasPrice;
-        try {
-                response = await got('https://ethgasstation.info/api/ethgasAPI.json').json();
-        } catch (error) {
-                return price;
-        }
-        const fast = response.fast;
-        if (!fast) {
-                return price;
-        }
-        price = Math.round((Number(fast) * 100000000));
+    var response;
+    var price = config.defaultGasPrice;
+    try {
+        response = await got('https://ethgasstation.info');
+        const $ = cheerio.load(response.body);
+        price = parseInt($('.count.fast').text()); //price in Gwei
+        price = price * 1000000000; //convert to wei
+    } catch (error) {
         return price;
+    }
+    return price;
 }
 
 module.exports = {
