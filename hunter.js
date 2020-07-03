@@ -3,17 +3,21 @@ const Web3 = require("web3");
 const DepositJSON = require("@keep-network/tbtc/artifacts/Deposit.json");
 const TBTCSystemJSON = require("@keep-network/tbtc/artifacts/TBTCSystem.json");
 const Pino = require("pino");
-const Logger = Pino({
-    level: process.env.LOG_LEVEL || 'info',
-    prettyPrint: {
-        levelFirst: true,
-        suppressFlushSyncWarning: true
-    }
-});
 
 //internal files
 const config = require('./config.json');
 const {getGasPrice} = require('./gas-price.js');
+
+const Logger = Pino({
+    level: config.logLevel || 'info',
+    prettyPrint: {
+        colorize: true,
+        ignore: "pid,hostname",
+        levelFirst: true,
+        suppressFlushSyncWarning: true,
+        translateTime: "yyyy-mm-dd HH:MM:ss.l"
+    }
+});
 
 // Web3 related constants
 const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://${config.network}.infura.io/ws/v3/${config.infura}`));
@@ -46,7 +50,10 @@ async function main() {
         const deposit = new web3.eth.Contract(DepositJSON.abi, depositAddress);
         // State of Deposit should be ACTIVE
         var result = await deposit.methods.getCurrentState().call();
-        if (result == 4 || result == 8) deposits.push(deposit);
+        if (result == 4 || result == 8) {
+        Logger.info(`Hunting Previously Active Deposit: ${deposit._address}`);
+          deposits.push(deposit);  
+        } 
     }
 
 
@@ -57,18 +64,21 @@ async function main() {
         } else {
             const depositAddress = result.returnValues._depositContractAddress;
             const deposit = new web3.eth.Contract(DepositJSON.abi, depositAddress);
+            Logger.info(`Hunting New Active Deposit: ${deposit._address}`)
             deposits.push(deposit);
         }
     });
 
     while (1) {
         attemptLiquidationOnAll(deposits);
+        Logger.info("Naptime...");
         await sleep(NAP_TIME);
     }
 }
 
 async function attemptLiquidationOnAll(deposits) {
     deposits.forEach(async (deposit, index, deposits) => {
+        Logger.info(`[${index}] Checking if Liquidatable: ${deposit._address}`)
         const depositAddress = deposit._address;
         const collateralizationPercentage = await deposit.methods.getCollateralizationPercentage()
             .call((error, result) => {
@@ -86,6 +96,7 @@ async function attemptLiquidationOnAll(deposits) {
             });
             const price = await getGasPrice();
             if (severeThreshold > collateralizationPercentage) {
+                Logger.info(`Attempting Liquidation: ${deposit._address}`);
                 deposit.methods.notifyUndercollateralizedLiquidation().send({gasPrice:price, gas:400000})
                 .on('receipt', function(receipt) {
                     Logger.info(`notifyUndercollateralizedLiquidation on Deposit ${depositAddress} was successfull.`);

@@ -7,5 +7,6 @@
         "proofTimeout":21600,
         "defaultGasPrice":20000000000,
         "deploymentBlock":10071347,
-        "hunterNapTime":900
+        "hunterNapTime":900,
+        "logLevel":"info"
 }

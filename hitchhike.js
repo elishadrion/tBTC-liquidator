@@ -3,17 +3,21 @@ const Web3 = require("web3");
 const DepositJSON = require("@keep-network/tbtc/artifacts/Deposit.json");
 const TBTCSystemJSON = require("@keep-network/tbtc/artifacts/TBTCSystem.json");
 const Pino = require("pino");
-const Logger = Pino({
-    level: process.env.LOG_LEVEL || 'info',
-    prettyPrint: {
-        levelFirst: true,
-        suppressFlushSyncWarning: true
-    }
-});
 
 //internal files
 const config = require('./config.json');
 const {getGasPrice} = require('./gas-price.js');
+
+const Logger = Pino({
+    level: config.logLevel || 'info',
+    prettyPrint: {
+        colorize: true,
+        ignore: "pid,hostname",
+        levelFirst: true,
+        suppressFlushSyncWarning: true,
+        translateTime: "yyyy-mm-dd HH:MM:ss.l"
+    }
+});
 
 // Web3 related constants
 const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://${config.network}.infura.io/ws/v3/${config.infura}`));
