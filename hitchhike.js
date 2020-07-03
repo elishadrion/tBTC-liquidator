@@ -2,10 +2,22 @@
 const Web3 = require("web3");
 const DepositJSON = require("@keep-network/tbtc/artifacts/Deposit.json");
 const TBTCSystemJSON = require("@keep-network/tbtc/artifacts/TBTCSystem.json");
+const Pino = require("pino");
 
 //internal files
 const config = require('./config.json');
 const {getGasPrice} = require('./gas-price.js');
+
+const Logger = Pino({
+    level: config.logLevel || 'info',
+    prettyPrint: {
+        colorize: true,
+        ignore: "pid,hostname",
+        levelFirst: true,
+        suppressFlushSyncWarning: true,
+        translateTime: "yyyy-mm-dd HH:MM:ss.l"
+    }
+});
 
 // Web3 related constants
 const web3 = new Web3(new Web3.providers.WebsocketProvider(`wss://${config.network}.infura.io/ws/v3/${config.infura}`));
@@ -33,28 +45,28 @@ async function main() {
         // Handles the latest courtesyCalls
         TBTCSystemContract.events.CourtesyCalled(function(error, result){
                 if (error) {
-                        console.log(error);
+                        Logger.error(error);
                 } else {
                         var depositAddress = depositEvent.returnValues._depositContractAddress;
-                        console.log(`Courtesy call on ${depositAddress}`);
+                        Logger.info(`Courtesy call on ${depositAddress}`);
                         callCourtesyTimeout(depositAddress, result.blockNumber);
                 }
 	});
         TBTCSystemContract.events.RedemptionRequested(function(error, result){
                 if (error) {
-                        console.log(error);
+                        Logger.error(error);
                 } else {
                         var depositAddress = depositEvent.returnValues._depositContractAddress;
-                        console.log(`RedemptionRequested on ${depositAddress}`);
+                        Logger.info(`RedemptionRequested on ${depositAddress}`);
                         callSignatureTimeout(depositAddress, result.blockNumber);
                 }
 	});
         TBTCSystemContract.events.GotRedemptionSignature(function(error, result){
                 if (error) {
-                        console.log(error);
+                        Logger.error(error);
                 } else {
                         var depositAddress = depositEvent.returnValues._depositContractAddress;
-                        console.log(`GotRedemptionSignature on ${depositAddress}`);
+                        Logger.info(`GotRedemptionSignature on ${depositAddress}`);
                         callProofTimeout(depositAddress, result.blockNumber);
                 }
 	});
@@ -74,14 +86,14 @@ async function processPastCourtesies() {
                 fromBlock:config.deploymentBlock
         }, (error, result) => {
                 if (error) {
-                        console.log("Couldn't get previously courtesy called deposits.");
+                        Logger.error("Couldn't get previously courtesy called deposits.");
                 }
         });
 
         // We treat every "past" courtesyCall as if they are current
         depositCourtesyCalled.map(function(e) {
                 var depositAddress = e.returnValues._depositContractAddress;
-                console.log(`Courtesy call on ${depositAddress}`);
+                Logger.info(`Courtesy call on ${depositAddress}`);
                 callCourtesyTimeout(depositAddress, e.blockNumber);
         });
 }
@@ -99,14 +111,14 @@ async function processPastSignatures() {
                 fromBlock:config.deploymentBlock
         }, (error, result) => {
                 if (error) {
-                        console.log("Couldn't get previously Deposits with a redemption request.");
+                        Logger.error("Couldn't get previously Deposits with a redemption request.");
                 }
         });
 
         // We treat every "past" courtesyCall as if they are current
         depositSignaturesRequested.map(function(e) {
                 var depositAddress = e.returnValues._depositContractAddress;
-                console.log(`RedemptionRequested on ${depositAddress}`);
+                Logger.info(`RedemptionRequested on ${depositAddress}`);
                 callSignatureTimeout(depositAddress, e.blockNumber);
         });
 }
@@ -123,14 +135,14 @@ async function processPastProofs() {
                 fromBlock:config.deploymentBlock
         }, (error, result) => {
                 if (error) {
-                        console.log("Couldn't get previously Deposits awaiting a redemption proof.");
+                        Logger.error("Couldn't get previously Deposits awaiting a redemption proof.");
                 }
         });
 
         // We treat every "past" courtesyCall as if they are current
         depositProofRequested.map(function(e) {
                 var depositAddress = e.returnValues._depositContractAddress;
-                console.log(`GotRedemptionSignature on ${depositAddress}`);
+                Logger.info(`GotRedemptionSignature on ${depositAddress}`);
                 callProofTimeout(depositAddress, e.blockNumber);
         });
 }
@@ -152,7 +164,7 @@ async function getDelay(blockNumber, defaultDuration) {
                 const expiration = block.timestamp*1000 + defaultDuration;
                 delay = expiration - now;
         } catch (error) {
-                console.log("Error when fetching block's timestamp.");
+                Logger.error("Error when fetching block's timestamp.");
         }
         return delay;
 }
@@ -173,11 +185,11 @@ async function callCourtesyTimeout(depositAddress, blockNumber) {
         //Verifies the Deposit contract is in the right state
         deposit.methods.getCurrentState().call((error, result) => {
                 if (error) {
-                        console.log(`Cannot get the state of Deposit ${depositAddress}.\nAborting liquidation.`)
+                        Logger.error(`Cannot get the state of Deposit ${depositAddress}.\nAborting liquidation.`)
                         return;
                 } else {
                         if (result != 8) {
-                                console.log(`Deposit ${depositAddress} isn't in a courtest call state.\nAborting liquidation.`)
+                                Logger.info(`Deposit ${depositAddress} isn't in a courtest call state.\nAborting liquidation.`)
                                 return;
                         }
                 }
@@ -188,10 +200,10 @@ async function callCourtesyTimeout(depositAddress, blockNumber) {
                 gasPrice:price,
                 gas:400000})
         .on('receipt', function(receipt) {
-                console.log(`notifyCourtesyTimeout on Deposit ${depositAddress} was successfull.`)
+                Logger.info(`notifyCourtesyTimeout on Deposit ${depositAddress} was successfull.`)
         }).on('error', function(error, receipt) {
-                console.log(error.message);
-                console.log(`notifyCourtesyTimeout on Deposit ${depositAddress} failed.`)
+                Logger.error(error.message);
+                Logger.error(`notifyCourtesyTimeout on Deposit ${depositAddress} failed.`)
         });
 
 }
@@ -205,11 +217,11 @@ async function callSignatureTimeout(depositAddress, blockNumber) {
         //Verifies the Deposit contract is in the right state
         deposit.methods.getCurrentState().call((error, result) => {
                 if (error) {
-                        console.log(`Cannot get the state of Deposit ${depositAddress}.\nAborting liquidation.`)
+                        Logger.error(`Cannot get the state of Deposit ${depositAddress}.\nAborting liquidation.`)
                         return;
                 } else {
                         if (result != 5) {
-                                console.log(`Deposit ${depositAddress} isn't awaiting for a redemption signature.\nAborting liquidation.`)
+                                Logger.info(`Deposit ${depositAddress} isn't awaiting for a redemption signature.\nAborting liquidation.`)
                                 return;
                         }
                 }
@@ -219,10 +231,10 @@ async function callSignatureTimeout(depositAddress, blockNumber) {
                 gasPrice:price,
                 gas:400000})
         .on('receipt', function(receipt) {
-                console.log(`notifySignatureTimeout on Deposit ${depositAddress} was successfull.`)
+                Logger.info(`notifySignatureTimeout on Deposit ${depositAddress} was successfull.`)
         }).on('error', function(error, receipt) {
-                console.log(error.message);
-                console.log(`notifySignatureTimeout on Deposit ${depositAddress} failed.`)
+                Logger.error(error.message);
+                Logger.error(`notifySignatureTimeout on Deposit ${depositAddress} failed.`)
         });
 }
 
@@ -235,11 +247,11 @@ async function callProofTimeout(depositAddress, blockNumber) {
         //Verifies the Deposit contract is in the right state
         deposit.methods.getCurrentState().call((error, result) => {
                 if (error) {
-                        console.log(`Cannot get the state of Deposit ${depositAddress}.\nAborting liquidation.`)
+                        Logger.error(`Cannot get the state of Deposit ${depositAddress}.\nAborting liquidation.`)
                         return;
                 } else {
                         if (result != 6) {
-                                console.log(`Deposit ${depositAddress} isn't awaiting for a signature proof.\nAborting liquidation.`)
+                                Logger.info(`Deposit ${depositAddress} isn't awaiting for a signature proof.\nAborting liquidation.`)
                                 return;
                         }
                 }
@@ -249,10 +261,10 @@ async function callProofTimeout(depositAddress, blockNumber) {
                 gasPrice:price,
                 gas:400000})
         .on('receipt', function(receipt) {
-                console.log(`notifyRedemptionProofTimeout on Deposit ${depositAddress} was successfull.`)
+                Logger.info(`notifyRedemptionProofTimeout on Deposit ${depositAddress} was successfull.`)
         }).on('error', function(error, receipt) {
-                console.log(error.message);
-                console.log(`notifyRedemptionProofTimeout on Deposit ${depositAddress} failed.`)
+                Logger.error(error.message);
+                Logger.error(`notifyRedemptionProofTimeout on Deposit ${depositAddress} failed.`)
         });
 }
 
