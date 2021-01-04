@@ -1,4 +1,5 @@
 // Dependencies
+require('dotenv').config();
 const Web3 = require("web3");
 const DepositJSON = require("@keep-network/tbtc/artifacts/Deposit.json");
 const TBTCSystemJSON = require("@keep-network/tbtc/artifacts/TBTCSystem.json");
@@ -39,6 +40,7 @@ async function main() {
         const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
         await web3.eth.accounts.wallet.add(account);
         web3.eth.defaultAccount = account.address;
+	Logger.info("Starting hitchhike.js ...");
         processPastCourtesies();
         processPastSignatures();
         processPastProofs();
@@ -81,6 +83,7 @@ async function main() {
  * @return {}
  */
 async function processPastCourtesies() {
+	Logger.info("Processing past courtesy calls...");
         //Retrieves the "past" courtesy calls (before the latest block)
         var depositCourtesyCalled = await TBTCSystemContract.getPastEvents("CourtesyCalled", {
                 fromBlock:config.deploymentBlock
@@ -107,6 +110,7 @@ async function processPastCourtesies() {
  * @return {}
  */
 async function processPastSignatures() {
+	Logger.info("Processing past signatures...");
         var depositSignaturesRequested = await TBTCSystemContract.getPastEvents("RedemptionRequested", {
                 fromBlock:config.deploymentBlock
         }, (error, result) => {
@@ -131,6 +135,7 @@ async function processPastSignatures() {
  * @return {}
  */
 async function processPastProofs() {
+	Logger.info("Processing past proofs...");
         var depositProofRequested = await TBTCSystemContract.getPastEvents("GotRedemptionSignature", {
                 fromBlock:config.deploymentBlock
         }, (error, result) => {

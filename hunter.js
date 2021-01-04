@@ -1,4 +1,5 @@
 // Dependencies
+require('dotenv').config();
 const Web3 = require("web3");
 const DepositJSON = require("@keep-network/tbtc/artifacts/Deposit.json");
 const TBTCSystemJSON = require("@keep-network/tbtc/artifacts/TBTCSystem.json");
@@ -36,6 +37,7 @@ async function main() {
     const account = await web3.eth.accounts.privateKeyToAccount(process.env.TBTC_PKEY);
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
+    Logger.info("Starting hunter.js ...");
     // Fetch all the created Deposits since the beginning
     var depositsCreated = await TBTCSystemContract.getPastEvents("Created", {
         fromBlock:config.deploymentBlock

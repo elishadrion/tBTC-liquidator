@@ -36,6 +36,9 @@ Copy sample.config.json to config.json and make your edits there.
 }
 ```
 
+
+Copy .env.example to .env and add a private key. It should have the "0x" prefix.
+
 ## hitchhike.js
 
 The script does exactly what its name sounds like. For all three following events, it passively waits for emission, processes it and wait for the corresponding delay to be over before calling the corresponding timeout function.
